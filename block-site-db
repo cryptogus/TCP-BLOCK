@@ -1,0 +1,5 @@
+# https://github.com/nmap/nmap/blob/master/nmap-os-db
+# nmap의 os 필터링에 사용되는 data base 형식을 참고함
+
+# test 용
+www.naver.com
