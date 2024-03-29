@@ -7,7 +7,7 @@ https://www.tcpdump.org/pcap.html 참고
 $ sudo apt install libpcap-dev
 ```
 Windows에서는 [npcap](https://npcap.com/) 이나 [winpcap](https://www.winpcap.org/)을 설치하여 환경을 구성하면 된다.\
-Wireshark를 Windwos에 설치하면서 설치 했을 수도 있다.
+Wireshark를 Windows에 설치하면서 설치 했을 수도 있다.
 
 ### reference
 https://gitlab.com/gilgil/sns/-/wikis/tcp-block/tcp-block \
