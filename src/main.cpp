@@ -9,7 +9,7 @@ struct pcap_val {
 
 void usage(char *name) {
     std::cout << "syntax : " << name << " <interface> <pattern>\n";
-    std::cout << "sample : " << name << " eth0 \"Host: test.cryptogus.net\"\n";
+    std::cout << "sample : " << name << " eth0 \"Host: malicious.net\"\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -18,12 +18,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     // initailize pcap value
-        pcap_val pval = {argv[1], argv[2]};
+    pcap_val pval = {argv[1], argv[2]};
 
     pcap_t *handle;
     handle = pcap_open_live(pval.dev_, BUFSIZ, 1, 1000, pval.errbuf_);
     if (handle == NULL) {
 	    std::cerr << "Couldn't open device "<< pval.dev_ <<": " << pval.errbuf_ << "\n";
-	return 2;
-}
+	    return 2;
+    }
 }
