@@ -1,6 +1,6 @@
 # TCP-BLOCK
-TCP Packet Injection(RST, FIN 플래그를 포함한)를 이용하여 사이트를 차단하는 프로그램
-
+TCP Packet Injection(RST, FIN 플래그를 포함한)를 이용하여 사이트를 차단하는 프로그램\
+Out of path의 대표격인 pcap library를 이용하여 패킷을 수신
 ### 개발 환경
 https://www.tcpdump.org/pcap.html 참고
 ```bash
