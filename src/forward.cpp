@@ -54,14 +54,52 @@ void send_rst_packet(const struct ip *ip_header, const struct tcphdr *tcp_header
     close(sock);
 }
 
+extern const char *targer_url;
+
 void packet_handler(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packet) {
     // IP 헤더와 TCP 헤더를 가져옵니다.
-    struct ip *ip_header = (struct ip *)(packet + 14);  // Ethernet header (14 bytes)
-    struct tcphdr *tcp_header = (struct tcphdr *)(packet + 14 + (ip_header->ip_hl * 4));
+    const struct ip *ip_header = (struct ip *)(packet + 14);  // Ethernet header (14 bytes)
+    const struct tcphdr *tcp_header = (struct tcphdr *)(packet + 14 + (ip_header->ip_hl * 4));
 
-    // 특정 IP로의 패킷인지 확인합니다.
-    if (strcmp(inet_ntoa(ip_header->ip_dst), TARGET_IP) == 0) {
-        std::cout << "목표 사이트로의 패킷 감지" << std::endl;
+    // IP 주소 해석을 위한 준비
+    struct addrinfo hints, *result, *p;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;  // IPv4만 허용
+    hints.ai_socktype = SOCK_STREAM;  // 스트림 소켓
+
+    int status;
+    if ((status = getaddrinfo(targer_url, NULL, &hints, &result)) != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+        return;
+    }
+
+    char ipstr[INET_ADDRSTRLEN];
+    struct in_addr target_ip;
+    bool target_found = false;
+
+    // 주소 정보를 순회하며 IP 주소 추출
+    for (p = result; p != NULL; p = p->ai_next) {
+        if (p->ai_family == AF_INET) {
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+            target_ip = ipv4->sin_addr;
+            inet_ntop(p->ai_family, &target_ip, ipstr, sizeof(ipstr));
+            printf("Resolved IP Address: %s\n", ipstr);
+            target_found = true;
+        } else {
+            fprintf(stderr, "IPv6 not implemented\n");
+            continue;
+        }
+    }
+    freeaddrinfo(result);  // 자원 해제
+
+    if (!target_found) {
+        fprintf(stderr, "Target IP not found\n");
+        return;
+    }
+
+    // 패킷의 목적지 IP와 비교
+    if (strcmp(inet_ntoa(ip_header->ip_dst), ipstr) == 0) {
+        std::cout << "pattern 감지" << std::endl;
         send_rst_packet(ip_header, tcp_header);
     }
 }

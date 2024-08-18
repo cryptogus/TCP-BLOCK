@@ -1,5 +1,8 @@
 #include <iostream>
 #include <pcap.h>
+#include "forward.h"
+
+const char *targer_url;
 
 struct pcap_val {
     char *dev_;
@@ -19,6 +22,7 @@ int main(int argc, char *argv[]) {
     }
     // initailize pcap value
     pcap_val pval = {argv[1], argv[2]};
+    targer_url = pval.pattern_;
 
     pcap_t *handle;
     handle = pcap_open_live(pval.dev_, BUFSIZ, 1, 1000, pval.errbuf_);
@@ -26,16 +30,17 @@ int main(int argc, char *argv[]) {
 	    std::cerr << "Couldn't open device "<< pval.dev_ <<": " << pval.errbuf_ << "\n";
 	    return 2;
     }
+    std::cout << "Network Dev: " << pval.dev_ <<"\nPattern: "<< pval.pattern_ <<"\n";
 
     // 패킷 필터링 설정 (TCP만 필터링)
     struct bpf_program fp;
     char filter_exp[] = "tcp";
     if (pcap_compile(handle, &fp, filter_exp, 0, PCAP_NETMASK_UNKNOWN) == -1) {
-        std::cerr << "pcap_compile() 실패" << std::endl;
+        std::cerr << "pcap_compile() Fail" << std::endl;
         return 2;
     }
     if (pcap_setfilter(handle, &fp) == -1) {
-        std::cerr << "pcap_setfilter() 실패" << std::endl;
+        std::cerr << "pcap_setfilter() Fail" << std::endl;
         return 2;
     }
 
