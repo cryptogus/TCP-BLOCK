@@ -35,12 +35,63 @@ void send_rst_packet(const struct ip *ip_header, const struct tcphdr *tcp_header
     new_tcp_header->th_flags = TH_RST | TH_ACK;
     new_tcp_header->th_win = 0;
 
-    // 패킷을 보내기 위한 대상 설정
+    // 패킷을 보내기 위한 대상 설정(수신 받는 패킷인데, 상대방에게 보내야하므로)
+    struct sockaddr_in dest;
+    dest.sin_family = AF_INET;
+    dest.sin_port = new_tcp_header->th_sport;
+    dest.sin_addr = new_ip_header->ip_src;
+
+    // TCP 체크섬 계산
+    // 체크섬은 생략했습니다. 실제 사용 시 체크섬 계산을 추가해야 합니다.
+    std::cout << "RST>> Target: ip: " << inet_ntoa(dest.sin_addr) << " port: "<< ntohs(dest.sin_port) <<"\n";
+    // 패킷 전송
+    if (sendto(sock, buffer, ntohs(new_ip_header->ip_len), 0, (struct sockaddr *) &dest, sizeof(dest)) < 0) {
+        perror("패킷 전송 실패");
+    } else {
+        std::cout << "RST 패킷 전송됨" << std::endl;
+    }
+
+    close(sock);
+}
+
+void send_fin_packet(const struct ip *ip_header, const struct tcphdr *tcp_header) {
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    if (sock < 0) {
+        perror("Fail to creating socket");
+        return;
+    }
+
+    // TCP FIN 패킷 생성
+    char buffer[4096];
+    memset(buffer, 0, sizeof(buffer));
+
+    // IP 헤더 복사
+    struct ip *new_ip_header = (struct ip *) buffer;
+    memcpy(new_ip_header, ip_header, sizeof(struct ip));
+
+    // IP 헤더 수정
+    new_ip_header->ip_dst = ip_header->ip_src;
+    new_ip_header->ip_src = ip_header->ip_dst;
+    new_ip_header->ip_ttl = 64;
+
+    // TCP 헤더 복사
+    struct tcphdr *new_tcp_header = (struct tcphdr *) (buffer + sizeof(struct ip));
+    memcpy(new_tcp_header, tcp_header, sizeof(struct tcphdr));
+
+    // TCP 헤더 수정 (FIN 플래그 설정)
+    new_tcp_header->th_seq = tcp_header->th_ack;
+    new_tcp_header->th_ack = htonl(ntohl(tcp_header->th_seq) + 1);
+
+    new_tcp_header->th_flags = TH_FIN | TH_ACK;
+    new_tcp_header->th_win = 0;
+
+    // 패킷을 보내기 위한 대상 설정(나 자신에게)
     struct sockaddr_in dest;
     dest.sin_family = AF_INET;
     dest.sin_port = new_tcp_header->th_dport;
     dest.sin_addr = new_ip_header->ip_dst;
 
+    std::cout << "FIN>> Target: ip: " << inet_ntoa(dest.sin_addr) << " port: "<< ntohs(dest.sin_port) <<"\n";
     // TCP 체크섬 계산
     // 체크섬은 생략했습니다. 실제 사용 시 체크섬 계산을 추가해야 합니다.
 
@@ -48,7 +99,7 @@ void send_rst_packet(const struct ip *ip_header, const struct tcphdr *tcp_header
     if (sendto(sock, buffer, ntohs(new_ip_header->ip_len), 0, (struct sockaddr *) &dest, sizeof(dest)) < 0) {
         perror("패킷 전송 실패");
     } else {
-        std::cout << "RST 패킷 전송됨" << std::endl;
+        std::cout << "FIN 패킷 송신됨" << std::endl;
     }
 
     close(sock);
@@ -101,5 +152,6 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char
     if (strcmp(inet_ntoa(ip_header->ip_dst), ipstr) == 0) {
         std::cout << "pattern 감지" << std::endl;
         send_rst_packet(ip_header, tcp_header);
+        send_fin_packet(ip_header, tcp_header);
     }
 }
