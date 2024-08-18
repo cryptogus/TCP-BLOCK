@@ -11,7 +11,12 @@ Wireshark를 Windows에 설치하면서 설치 했을 수도 있다.
 
 ## Build
 ```bash
-g++ src/main.cpp -o tcp-block -lpcap
+$ g++ src/main.cpp -o tcp-block -lpcap
+```
+
+## Test
+```bash
+$ wget www.google.com
 ```
 ### reference
 https://gitlab.com/gilgil/sns/-/wikis/tcp-block/tcp-block \
